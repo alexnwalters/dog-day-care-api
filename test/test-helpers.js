@@ -1,9 +1,13 @@
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+
 function cleanTables(db) {
     return db.transaction(trx =>
         trx.raw(
             `TRUNCATE
             admin_users,
-            care_requests`
+            care_requests
+            `
         )
         .then(() =>
             Promise.all([
@@ -22,14 +26,14 @@ function makeUsersArray() {
             id: 1,
             user_name: 'test-user-1',
             full_name: 'Test user 1',
-            password: 'password',
+            password: 'Password1',
             date_created: new Date('2029-01-22T16:28:32.615Z'),
         },
         {
             id: 2,
             user_name: 'test-user-2',
             full_name: 'Test user 2',
-            password: 'password',
+            password: 'Password2',
             date_created: new Date('2029-01-22T16:28:32.615Z'),
         },
     ]
@@ -64,10 +68,25 @@ function makeCareRequestsArray() {
     ]
 }
 
+function makeNewRequestsArray() {
+    return [
+        {
+            absent: 'ok', aggression: 'No', bite: 'No', bite_details: 'n/a', children: 'ok', crate: 'Yes', escape: 'No', growl: 'No', growl_other: 'No', 
+            other_pets: 'Yes', prior_care: 'Yes', visitors: 'ok', contact_name: 'Jane Smith', email: 'jane@smith.com', phone: '301-111-5555', age_mos: 3, 
+            age_yrs: 2, breed: 'Lab', dog_name: 'Rover', exam: '2019-01', medical: 'nothing to note', sex: 'Male', spayed: 'Yes', vaccines: 'Yes',
+            care_date: '2019-10-01', service: 'Day Care', status: 'Pending', date_created: '2029-01-22T16:28:32.615Z'
+        },
+        {
+            dog_name: 'Bad Dog'
+        },
+    ]
+}
+
 function makeRequestFixtures() {
     const testUsers = makeUsersArray()
     const testCareRequests = makeCareRequestsArray()
-    return { testUsers, testCareRequests }
+    const testNewRequests = makeNewRequestsArray()
+    return { testUsers, testCareRequests, testNewRequests }
 }
 
 function makeExpectedRequests(requests) {
@@ -114,23 +133,112 @@ function makeExpectedRequests(requests) {
     })
 }
 
-//need to add users and will need to create seedUsers() that will has password
+function makeMaliciousRequest() {
+    const maliciousRequest = {
+        id: 911,
+        absent: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`, 
+        contact_name: 'Naughty naughty very naughty <script>alert("xss");</script>',
+        aggression: 'No', bite: 'No', bite_details: 'n/a', children: 'ok', crate: 'Yes', escape: 'No', growl: 'No', growl_other: 'No', 
+        other_pets: 'Yes', prior_care: 'Yes', visitors: 'ok', email: 'jane@smith.com', phone: '301-111-5555', age_mos: 3, 
+        age_yrs: 2, breed: 'Lab', dog_name: 'Rover', exam: '2019-01', medical: 'nothing to note', sex: 'Male', spayed: 'Yes', vaccines: 'Yes',
+        care_date: '2019-10-01', service: 'Day Care', status: 'Pending', date_created: '2029-01-22T16:28:32.615Z'
+    }
 
-function seedTables(db, requests) {
+    const expectedSanitizedRequest = {
+        id: maliciousRequest.id,
+        behavioral_info: {
+            absent: `Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`,
+            aggression: maliciousRequest.aggression,
+            bite: maliciousRequest.bite,
+            bite_details: maliciousRequest.bite_details,
+            children: maliciousRequest.children,
+            crate: maliciousRequest.crate,
+            escape: maliciousRequest.escape,
+            growl: maliciousRequest.growl,
+            growl_other: maliciousRequest.growl_other,
+            other_pets: maliciousRequest.other_pets,
+            prior_care: maliciousRequest.prior_care,
+            visitors: maliciousRequest.visitors,
+        },
+        contact_info: {
+            contact_name: 'Naughty naughty very naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt;',
+            email: maliciousRequest.email,
+            phone: maliciousRequest.phone,
+        },
+        dog_info: {
+            age_mos: maliciousRequest.age_mos,
+            age_yrs: maliciousRequest.age_yrs,
+            breed: maliciousRequest.breed,
+            dog_name: maliciousRequest.dog_name,
+            exam: maliciousRequest.exam,
+            medical: maliciousRequest.medical,
+            sex: maliciousRequest.sex,
+            spayed: maliciousRequest.spayed,
+            vaccines: maliciousRequest.vaccines
+        },
+        service_info: {
+            care_date: maliciousRequest.care_date,
+            service: maliciousRequest.service,
+            status: maliciousRequest.status,
+        },
+        date_created: maliciousRequest.date_created
+    }
+
+    return {
+        maliciousRequest,
+        expectedSanitizedRequest,
+    }
+}
+
+function seedUsers(db, users) {
+    const preppedUsers = users.map(user => ({
+        ...user,
+        password: bcrypt.hashSync(user.password, 1)
+    }))
+    return db.into('admin_users').insert(preppedUsers)
+        .then(() => 
+            db.raw(
+                `SELECT setval('admin_users_id_seq', ?)`,
+                [users[users.length - 1].id],
+            )
+        )
+}
+
+function seedTables(db, users, requests) {
     return db.transaction( async trx => {
-       await trx.into('care_requests').insert(requests)
-       await trx.raw(
+        await seedUsers(trx, users)
+        await trx.into('care_requests').insert(requests)
+        await trx.raw(
            `SELECT setval('care_requests_id_seq', ?)`,
            [requests[requests.length - 1].id]
        )
     })
 }
 
+function seedMaliciousRequest(db, request) {
+    return db.transaction(async trx => {
+        await trx.into('care_requests').insert(request)
+    })
+}
+
+function makeAuthHeader(user, secret = process.env.JWT_SECRET) {
+    const token = jwt.sign({ user_id: user.id }, secret, {
+        subject: user.user_name,
+        algorithm: 'HS256',
+    })
+    return `Bearer ${token}` 
+}
+
 module.exports = {
     cleanTables,
     makeUsersArray,
     makeCareRequestsArray,
+    makeNewRequestsArray,
     makeRequestFixtures,
+    makeMaliciousRequest,
+    seedUsers,
     seedTables,
     makeExpectedRequests,
+    seedMaliciousRequest,
+    makeAuthHeader,
 }

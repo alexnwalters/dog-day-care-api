@@ -11,4 +11,4 @@ const db = knex({
 
 app.set('db', db)
 
-app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server listening at http://localhost:${PORT}`));

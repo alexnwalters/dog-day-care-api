@@ -45,7 +45,7 @@ CREATE TABLE care_requests (
     children TEXT NOT NULL,
     visitors TEXT NOT NULL,
     absent TEXT NOT NULL,
-    care_date DATE NOT NULL,
+    care_date TEXT NOT NULL,
     service care_options NOT NULL,
     status status_options NOT NULL,
     date_created TIMESTAMP default NOW() NOT NULL

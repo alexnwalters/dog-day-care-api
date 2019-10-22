@@ -7,8 +7,8 @@ TRUNCATE
 
 INSERT INTO admin_users (user_name, full_name, password)
 VALUES
-    ('TestUser', 'Tester', 'Test123'),
-    ('AdminUser', 'Administrator', 'Admin123');
+    ('TestUser', 'Tester', '$2a$16$RXIq0n8QiaPOlNpXqUswBenXxUInM3.pSxkk4A.vbxiQIhBlka/n2'), --Test123
+    ('AdminUser', 'Administrator', '$2a$16$wibnAde5lRBDJdUSXT1suuKMNNxCE8tH36s9P2aZcL4YtO0RgcRTK'); --Admin123
 
 INSERT INTO care_requests (contact_name, email, phone, dog_name, breed, age_yrs, age_mos,
                 sex, spayed, exam, vaccines, medical, prior_care, crate, escape, other_pets,
