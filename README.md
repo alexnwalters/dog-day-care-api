@@ -1,17 +1,21 @@
-# Express Boilerplate!
+# Dog Day Care API
 
-This is a boilerplate project used for starting new projects!
+An Express Server use to run the dog day care app. Used to authenticate admin users, and services the CRUD operations. 
 
-## Set up
+Live Demo: [Dog Day Care - Pawsitive Vibez](https://dog-day-care-app.now.sh/)
 
-Complete the following steps to start a new project (NEW-PROJECT-NAME):
+## Setup
 
-1. Clone this repository to your local machine `git clone BOILERPLATE-URL NEW-PROJECTS-NAME`
-2. `cd` into the cloned repository
-3. Make a fresh start of the git history for this project with `rm -rf .git && git init`
-4. Install the node dependencies `npm install`
-5. Move the example Environment file to `.env` that will be ignored by git and read by the express server `mv example.env .env`
-6. Edit the contents of the `package.json` to use NEW-PROJECT-NAME instead of `"name": "express-boilerplate",`
+Download and start the client-side application found at [Dog-Day-Care-App](https://github.com/alexnwalters/Dog-Day-Care-App).
+
+At minimum create an .env file with a JWT_SECRET variable and assign variables for your database to meet the requirements for the postgrator-config.js file in order to migrate you database.
+
+## Skills
+
+* Node.js / Express
+* PostgreSQL
+* Knex
+* JWT / Bcrypt
 
 ## Scripts
 
@@ -23,4 +27,7 @@ Run the tests `npm test`
 
 ## Deploying
 
+Be sure to create .env variables for your production database to meet the requirements of the postgrator-production-config.js file.
+
 When your new project is ready for deployment, add a new Heroku application with `heroku create`. This will make a new git remote called "heroku" and you can then `npm run deploy` which will push to this remote's master branch.
+
