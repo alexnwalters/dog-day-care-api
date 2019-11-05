@@ -1,6 +1,7 @@
 const xss = require('xss')
 
 const RequestsService = {
+    //from care_requests table returns response with formated into groups: behavioral_info, dog_info, contact_info, service_info.
     getCareRequests(db){
         return db
             .from('care_requests')

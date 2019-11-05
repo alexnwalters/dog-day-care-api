@@ -6,6 +6,7 @@ const path = require('path')
 const requestsRouter = express.Router()
 const jsonBodyParser = express.json()
 
+//handles GET call for all care requests
 requestsRouter
     .route('/')
     .get(requireAuth, (req, res, next) => {
@@ -19,6 +20,7 @@ requestsRouter
             .catch(next)
     })
 
+//handles PATCH and DELETE of care request by id
 requestsRouter
     .route('/:request_id')
     .all(requireAuth)
@@ -67,6 +69,7 @@ requestsRouter
         .catch(next)
     })
 
+//handles POST of new care request
 requestsRouter
     .route('/')
     .post(jsonBodyParser, (req, res, next) => {

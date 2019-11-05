@@ -10,6 +10,31 @@ Download and start the client-side application found at [Dog-Day-Care-App](https
 
 At minimum create an .env file with a JWT_SECRET variable and assign variables for your database to meet the requirements for the postgrator-config.js file in order to migrate you database.
 
+## Endpoints
+
+### '/requests'
+
+#### GET
+Returns all care requests. Requires 'authorization' header.
+
+#### POST
+Submits new care requests.
+
+### '/requests/:request_id'
+
+#### GET 
+Gets single request by id. Requires 'authorization' header.
+
+#### PATCH
+Updates request by id. Requires 'authorization' header.
+
+#### DELETE
+Deletes request by id. Requires 'authorization' header.
+
+### '/auth/login'
+#### POST
+Verifies admin users, returns authorization token to be used in header for protected endpoints.
+
 ## Skills
 
 * Node.js / Express
